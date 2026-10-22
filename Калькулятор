@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Калькулятор</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="calculator">
+        <div class="display">
+            <div class="history" id="history"></div>
+            <div class="display-row">
+                <!-- Кнопка удаления по одному символу в левой части экрана -->
+                <button class="backspace-btn" onclick="deleteLast()">⌫</button>
+                <!-- При клике на само число цифра также сотрется -->
+                <div class="current-input" id="display" onclick="deleteLast()">0</div>
+            </div>
+        </div>
+        <div class="grid">
+            <button class="action" onclick="clearAll()">AC</button>
+            <button class="action" onclick="toggleSign()">+/–</button>
+            <button class="action" onclick="percentage()">%</button>
+            <button class="operator" onclick="setOperator('/')">÷</button>
+
+            <button onclick="appendNumber('7')">7</button>
+            <button onclick="appendNumber('8')">8</button>
+            <button onclick="appendNumber('9')">9</button>
+            <button class="operator" onclick="setOperator('*')">×</button>
+
+            <button onclick="appendNumber('4')">4</button>
+            <button onclick="appendNumber('5')">5</button>
+            <button onclick="appendNumber('6')">6</button>
+            <button class="operator" onclick="setOperator('-')">−</button>
+
+            <button onclick="appendNumber('1')">1</button>
+            <button onclick="appendNumber('2')">2</button>
+            <button onclick="appendNumber('3')">3</button>
+            <button class="operator" onclick="setOperator('+')">+</button>
+
+            <button style="grid-column: span 2;" onclick="appendNumber('0')">0</button>
+            <button onclick="appendDecimal()">,</button>
+            <button class="operator" onclick="calculate()">=</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    user-select: none;
+}
+
+body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background-color: #f5f5f7;
+}
+
+.calculator {
+    width: 320px;
+    background-color: #e8f0fe;
+    border-radius: 30px;
+    padding: 24px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.display {
+    background-color: transparent;
+    min-height: 120px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 10px;
+    overflow: hidden;
+}
+
+.history {
+    font-size: 18px;
+    color: #7b8e9b;
+    margin-bottom: 5px;
+    min-height: 22px;
+    word-break: break-all;
+    text-align: right;
+}
+
+.display-row {
+    display: flex;
+    width: 100%;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.backspace-btn {
+    background: none;
+    border: none;
+    font-size: 20px;
+    color: #4a90e2;
+    cursor: pointer;
+    padding: 5px;
+    opacity: 0.7;
+    transition: opacity 0.1s;
+}
+
+.backspace-btn:hover {
+    opacity: 1;
+}
+
+.current-input {
+    font-size: 44px;
+    font-weight: 400;
+    color: #2c5282;
+    white-space: nowrap;
+    display: inline-block;
+    transform-origin: right center;
+    transition: transform 0.1s ease;
+    cursor: pointer;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+}
+
+button {
+    border: none;
+    background-color: #ffffff;
+    color: #2c5282;
+    font-size: 24px;
+    font-weight: 500;
+    height: 60px;
+    border-radius: 16px;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: background-color 0.1s, transform 0.05s;
+}
+
+button:active {
+    transform: scale(0.95);
+    background-color: #f0f4f8;
+}
+
+button.action {
+    color: #4a90e2;
+}
+
+button.operator {
+    background-color: #6ba4e8;
+    color: #ffffff;
+    font-size: 28px;
+}
+
+button.operator:active {
+    background-color: #528ecc;
+}
+
+const display = document.getElementById('display');
+const historyDisplay = document.getElementById('history');
+const displayContainer = document.querySelector('.display');
+
+let currentInput = '0';
+let previousInput = '';
+let operator = null;
+let shouldResetDisplay = false;
+
+function updateDisplay() {
+    let formatted = currentInput.replace('.', ',');
+    
+    if (!currentInput.includes('.')) {
+        formatted = currentInput.replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+    } else {
+        let parts = currentInput.split('.');
+        parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+        formatted = parts.join(',');
+    }
+    
+    display.innerText = formatted;
+    adjustFontSize();
+}
+
+function adjustFontSize() {
+    display.style.transform = 'scale(1)';
+    const containerWidth = displayContainer.clientWidth - 60; 
+    const textWidth = display.scrollWidth;
+
+    if (textWidth > containerWidth) {
+        const scaleFactor = containerWidth / textWidth;
+        display.style.transform = `scale(${scaleFactor})`;
+    }
+}
+
+function appendNumber(number) {
+    if (currentInput === '0' || shouldResetDisplay) {
+        currentInput = number;
+        shouldResetDisplay = false;
+    } else {
+        currentInput += number;
+    }
+    updateDisplay();
+}
+
+function appendDecimal() {
+    if (shouldResetDisplay) {
+        currentInput = '0';
+        shouldResetDisplay = false;
+    }
+    if (!currentInput.includes('.')) {
+        currentInput += '.';
+    }
+    updateDisplay();
+}
+
+function clearAll() {
+    currentInput = '0';
+    previousInput = '';
+    operator = null;
+    shouldResetDisplay = false;
+    historyDisplay.innerText = '';
+    updateDisplay();
+}
+
+function deleteLast() {
+    if (shouldResetDisplay) {
+        historyDisplay.innerText = '';
+        return;
+    }
+    
+    if (currentInput.length > 1) {
+        currentInput = currentInput.slice(0, -1);
+        if (currentInput === '-') currentInput = '0';
+    } else {
+        currentInput = '0';
+    }
+    updateDisplay();
+}
+
+function toggleSign() {
+    if (currentInput === '0') return;
+    currentInput = (parseFloat(currentInput) * -1).toString();
+    updateDisplay();
+}
+
+function percentage() {
+    currentInput = (parseFloat(currentInput) / 100).toString();
+    updateDisplay();
+}
+
+function setOperator(nextOperator) {
+    if (operator && !shouldResetDisplay) {
+        calculate();
+    }
+    previousInput = currentInput;
+    operator = nextOperator;
+    shouldResetDisplay = true;
+    
+    let opSymbol = nextOperator === '*' ? '×' : nextOperator === '/' ? '÷' : nextOperator;
+    historyDisplay.innerText = `${previousInput.replace('.', ',')} ${opSymbol}`;
+}
+
+function calculate() {
+    if (!operator || shouldResetDisplay) return;
+
+    const prev = parseFloat(previousInput);
+    const current = parseFloat(currentInput);
+    let result = 0;
+
+    switch (operator) {
+        case '+': result = prev + current; break;
+        case '-': result = prev - current; break;
+        case '*': result = prev * current; break;
+        case '/': 
+            if (current === 0) {
+                alert("Ошибка: деление на ноль!");
+                clearAll();
+                return;
+            }
+            result = prev / current; 
+            break;
+        default: return;
+    }
+
+    result = Math.round(result * 1e10) / 1e10;
+
+    historyDisplay.innerText = '';
+    currentInput = result.toString();
+    operator = null;
+    shouldResetDisplay = true;
+    updateDisplay();
+}
+
+window.addEventListener('resize', adjustFontSize);
